@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "A/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { canAccessCRM } from "@/lib/permissions";
 
 // GET /api/vendeurs - Lister tous les vendeurs avec recherche
@@ -44,4 +44,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(vendeurs);
   } catch (e: unknown) {
     return NextResponse.json(
-      { error: "Erreur serveur", details: e instanceof Error ? e.message : "u
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
+  }
+}
