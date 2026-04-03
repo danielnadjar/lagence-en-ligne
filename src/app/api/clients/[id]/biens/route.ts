@@ -52,4 +52,8 @@ export async function POST(
     return NextResponse.json(bien, { status: 201 });
   } catch (e: unknown) {
     return NextResponse.json(
-      { error: "Erreur serveur", details: e instanceof Error ? e.mess
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
+  }
+}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "A/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { canAccessCRM } from "@/lib/permissions";
 
 // POST /api/biens/[id]/vendeur - Créer ou mettre à jour le vendeur
@@ -51,4 +51,8 @@ export async function POST(
     return NextResponse.json(vendeur, { status: 201 });
   } catch (e: unknown) {
     return NextResponse.json(
-      { error: "Erreur serveur", details: e instanceof Error ? e.messa
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
+  }
+}

@@ -134,4 +134,5 @@ export default function ChangePasswordPage() {
         </form>
       </div>
     </div>
-  
+  );
+}

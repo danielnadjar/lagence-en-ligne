@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "A/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/permissions";
 import { MANDAT_TEMPLATE_DEFAULT } from "@/lib/mandat-template";
 
@@ -25,7 +25,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      mandatTexte: params.mandatTexte || MANDATETEMPLATE_DEFAULT,
+      mandatTexte: params.mandatTexte || MANDAT_TEMPLATE_DEFAULT,
     });
   } catch (e: unknown) {
     return NextResponse.json(
@@ -59,4 +59,8 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ ok: true, mandatTexte: params.mandatTexte });
   } catch (e: unknown) {
     return NextResponse.json(
-      { error: "Erreur serveur", details: e instanceof Error ?
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
+  }
+}
