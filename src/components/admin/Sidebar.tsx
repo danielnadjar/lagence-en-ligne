@@ -39,79 +39,4 @@ const navItems = [
   {
     label: "ParamÃ¨tres",
     href: "/admin/parametres",
-    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
-    roles: ["ADMIN"],
-  },
-];
-
-export default function Sidebar() {
-  const pathname = usePathname();
-  const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role || "NEGOCIATEUR";
-
-  const visibleItems = navItems.filter((item) => item.roles.includes(userRole));
-
-  return (
-    <aside className="w-64 bg-dark-900 border-r border-dark-700 min-h-screen flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-dark-700">
-        <h1 className="text-xl font-bold text-white">CRM NÃ©gociateur</h1>
-        <p className="text-xs text-dark-400 mt-1">L&apos;Agence en Ligne</p>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={clsx(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-              pathname.startsWith(item.href)
-                ? "bg-primary-600/20 text-primary-400"
-                : "text-dark-300 hover:text-white hover:bg-dark-800"
-            )}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d={item.icon}
-              />
-            </svg>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* User info */}
-      <div className="p-4 border-t border-dark-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-sm font-bold">
-            {session?.user?.name?.[0] || "A"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {session?.user?.name}
-            </p>
-            <p className="text-xs text-dark-400 truncate">
-              {ROLE_LABELS[userRole] || userRole}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="w-full text-sm text-dark-400 hover:text-red-400 transition-colors text-left"
-        >
-          Se dÃ©connecter
-        </button>
-      </div>
-    </aside>
-  );
-}
+    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37c.996.608 2.296.07 2.572-1.065z(4ÄÔ€ÄÉ„Ì€Ì€À€ÄÄ´Ø€À€Ì€Ì€À€ÀÄØ€Áèˆ°4(€€€É½±•Ìèl‰5%8‰t°4(€ô°4)tì4(4)•áÁ½ÉĞ‘•™…Õ±Ğ™Õ¹Ñ¥½¸M¥‘•‰…È ¤ì4(€½¹ÍĞÁ…Ñ¡¹…µ”€ôÕÍ•A…Ñ¡¹…µ” ¤ì4(€½¹ÍĞì‘…Ñ„èÍ•ÍÍ¥½¸ô€ôÕÍ•M•Ídå¸ ¤ì4(€½¹ÍĞÕÍ•ÉI½±”€ô€¡Í•ÍÍ¥½¸ü¹ÕÍ•È…Ì…¹ä¤ü¹É½±”ñğ€‰94-TEUR 3B 0
