@@ -519,7 +519,37 @@ function AddBienModal({
     surface: "",
     typeBien: "APPARTEMENT",
   });
+  const [vendeurForm, setVendeurForm] = useState({
+    nom: "",
+    telephone: "",
+    email: "",
+  });
   const [loading, setLoading] = useState(false);
+  const [scraping, setScraping] = useState(false);
+
+  const handleScrape = async () => {
+    if (!form.lienAnnonce) return;
+    setScraping(true);
+    try {
+      const res = await fetch(`/api/scrape-annonce`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: form.lienAnnonce }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setForm((prev) => ({
+          ...prev,
+          prixAffiche: data.prix ? String(data.prix) : prev.prixAffiche,
+          ville: data.ville || prev.ville,
+          codePostal: data.codePostal || prev.codePostal,
+          surface: data.surface ? String(data.surface) : prev.surface,
+          typeBien: data.typeBien || prev.typeBien,
+        }));
+      }
+    } catch {}
+    setScraping(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -528,7 +558,7 @@ function AddBienModal({
     await fetch(`/api/clients/${clientId}/biens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, vendeur: vendeurForm }),
     });
 
     onCreated();
@@ -549,15 +579,25 @@ function AddBienModal({
             <label className="block text-sm text-dark-300 mb-1">
               Lien de l&apos;annonce
             </label>
-            <input
-              type="url"
-              value={form.lienAnnonce}
-              onChange={(e) =>
-                setForm({ ...form, lienAnnonce: e.target.value })
-              }
-              className="input-field"
-              placeholder="https://www.leboncoin.fr/..."
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={form.lienAnnonce}
+                onChange={(e) =>
+                  setForm({ ...form, lienAnnonce: e.target.value })
+                }
+                className="input-field flex-1"
+                placeholder="https://www.leboncoin.fr/..."
+              />
+              <button
+                type="button"
+                onClick={handleScrape}
+                disabled={scraping || !form.lienAnnonce}
+                className="btn-secondary px-3 text-sm whitespace-nowrap"
+              >
+                {scraping ? "⏳" : "🔍 Scraper"}
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -627,6 +667,55 @@ function AddBienModal({
                 onChange={(e) => setForm({ ...form, surface: e.target.value })}
                 className="input-field"
               />
+            </div>
+          </div>
+
+          {/* Coordonnées du vendeur */}
+          <div className="border-t border-dark-600 pt-4 mt-2">
+            <h3 className="text-sm font-semibold text-dark-200 mb-3">Coordonnées du vendeur</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-dark-300 mb-1">Nom</label>
+                <input
+                  value={vendeurForm.nom}
+                  onChange={(e) => setVendeurForm({ ...vendeurForm, nom: e.target.value })}
+                  className="input-field"
+                  placeholder="Nom du vendeur"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-dark-300 mb-1">Téléphone</label>
+                <input
+                  value={vendeurForm.telephone}
+                  onChange={(e) => setVendeurForm({ ...vendeurForm, telephone: e.target.value })}
+                  className="input-field"
+                  placeholder="06 12 34 56 78"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-sm text-dark-300 mb-1">Email</label>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={vendeurForm.email}
+                  onChange={(e) => setVendeurForm({ ...vendeurForm, email: e.target.value })}
+                  className="input-field flex-1"
+                  placeholder="vendeur@email.com"
+                />
+                {vendeurForm.email && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(vendeurForm.email);
+                    }}
+                    className="btn-secondary px-3 text-sm whitespace-nowrap"
+                    title="Copier l'email"
+                  >
+                    📋 Copier
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

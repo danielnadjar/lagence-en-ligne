@@ -264,8 +264,18 @@ export default function BienDetailPage() {
   const activeMove = getLastActiveMove();
   const chronoMoves = [...(bien.negociations || [])].sort((a: any, b: any) => a.ordre - b.ordre);
 
+  // Calcul de l'écart : dernière offre acquéreur vs dernière offre vendeur (ou prix affiché)
+  const lastAcqMove = [...chronoMoves].reverse().find((m: any) => m.camp === "ACQUEREUR" && m.montant && m.statut !== "SANS_SUITE");
+  const lastVendMove = [...chronoMoves].reverse().find((m: any) => m.camp === "VENDEUR" && m.montant && m.statut !== "SANS_SUITE");
+  const prixDemande = lastVendMove?.montant || bien.prixAffiche;
+  const prixOffre = lastAcqMove?.montant || 0;
+  const ecart = prixOffre > 0 ? Math.abs(prixDemande - prixOffre) : 0;
+
+  // Commentaires de la négociation (chronologiques)
+  const negoComments = chronoMoves.filter((m: any) => m.commentaire);
+
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Breadcrumb + Actions */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -279,52 +289,86 @@ export default function BienDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {chronoMoves.length > 0 && (
-            <button
-              onClick={resetNego}
-              className="text-[11px] text-yellow-500 border border-yellow-500/30 px-2.5 py-1.5 rounded-lg hover:bg-yellow-500/10 transition"
-            >
+            <button onClick={resetNego} className="text-[11px] text-yellow-500 border border-yellow-500/30 px-2.5 py-1.5 rounded-lg hover:bg-yellow-500/10 transition">
               RAZ Négo
             </button>
           )}
-          <button
-            onClick={deleteBien}
-            className="text-[11px] text-red-500 border border-red-500/30 px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 transition"
-          >
+          <button onClick={deleteBien} className="text-[11px] text-red-500 border border-red-500/30 px-2.5 py-1.5 rounded-lg hover:bg-red-500/10 transition">
             Supprimer
           </button>
         </div>
       </div>
 
-      {/* ===== PRIX AFFICHÉ DU BIEN + VENDEUR INFO EN HAUT ===== */}
-      <div className="flex items-start justify-between gap-6 py-5 mb-2">
-        {/* LEFT: Prix du bien */}
-        <div className="flex-1">
-          <p className="text-xs text-gray-500 uppercase tracking-widest">Prix affiché du bien</p>
-          <p className="text-4xl font-extrabold text-white mt-1">{formatPrix(bien.prixAffiche)}</p>
+      {/* ===== EN-TÊTE 3 COLONNES : ACQUÉREUR | PRIX + ÉCART | VENDEUR ===== */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {/* LEFT: Acquéreur */}
+        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+          <p className="text-[10px] text-indigo-400 uppercase tracking-wider font-bold mb-2 flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+            Acquéreur
+          </p>
+          <p className="font-semibold text-white text-sm">{client.prenom} {client.nom}</p>
+          <div className="space-y-1 mt-2">
+            {client.telephone && (
+              <p className="text-xs text-gray-400"><span className="text-gray-600">Tél:</span> {client.telephone}</p>
+            )}
+            {client.email && (
+              <p className="text-xs text-gray-400"><span className="text-gray-600">Email:</span> {client.email}</p>
+            )}
+            {client.budgetMax && (
+              <p className="text-xs text-gray-400"><span className="text-gray-600">Budget:</span> {formatPrix(client.budgetMax)}</p>
+            )}
+          </div>
+        </div>
+
+        {/* CENTER: Prix affiché + Écart */}
+        <div className="text-center flex flex-col items-center justify-center">
+          <p className="text-xs text-gray-500 uppercase tracking-widest">Prix affiché</p>
+          <p className="text-3xl font-extrabold text-white mt-1">{formatPrix(bien.prixAffiche)}</p>
           <p className="text-xs text-gray-500 mt-1">
             {bien.typeBien ? TYPE_BIEN_LABELS[bien.typeBien as keyof typeof TYPE_BIEN_LABELS] || bien.typeBien : ""}
             {bien.surface ? ` · ${bien.surface}m²` : ""}
             {bien.ville ? ` · ${bien.ville}` : ""}
-            {bien.codePostal ? ` ${bien.codePostal}` : ""}
           </p>
+          {ecart > 0 && (
+            <div className="mt-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-4 py-2">
+              <p className="text-[10px] text-yellow-400 uppercase tracking-wider font-bold">Écart</p>
+              <p className="text-2xl font-extrabold text-yellow-400">{formatPrix(ecart)}</p>
+            </div>
+          )}
         </div>
 
-        {/* RIGHT: Vendeur info (read-only summary) */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 w-64 flex-shrink-0">
-          <p className="text-[10px] text-orange-400 uppercase tracking-wider font-bold mb-2">Vendeur</p>
-          <p className="font-semibold text-white text-sm">{bien.vendeur?.nom || "Non renseigné"}</p>
-          <div className="space-y-1 mt-2">
-            {bien.vendeur?.telephone && (
-              <p className="text-xs text-gray-400">
-                <span className="text-gray-600">Tél:</span> {bien.vendeur.telephone}
-              </p>
-            )}
-            {bien.vendeur?.email && (
-              <p className="text-xs text-gray-400">
-                <span className="text-gray-600">Email:</span> {bien.vendeur.email}
-              </p>
-            )}
+        {/* RIGHT: Vendeur */}
+        <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] text-orange-400 uppercase tracking-wider font-bold mb-2 flex items-center gap-1.5">
+              Vendeur
+              <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+            </p>
+            <button onClick={() => setEditVendeur(!editVendeur)} className="text-[10px] text-gray-500 hover:text-white">
+              {editVendeur ? "✕" : "✏️"}
+            </button>
           </div>
+          {editVendeur ? (
+            <div className="space-y-2">
+              <input value={vendeurForm.nom} onChange={(e) => setVendeurForm({ ...vendeurForm, nom: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-orange-500" placeholder="Nom" />
+              <input value={vendeurForm.telephone} onChange={(e) => setVendeurForm({ ...vendeurForm, telephone: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-orange-500" placeholder="Téléphone" />
+              <input value={vendeurForm.email} onChange={(e) => setVendeurForm({ ...vendeurForm, email: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-orange-500" placeholder="Email" />
+              <button onClick={saveVendeur} className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded w-full">Sauvegarder</button>
+            </div>
+          ) : (
+            <>
+              <p className="font-semibold text-white text-sm">{bien.vendeur?.nom || "Non renseigné"}</p>
+              <div className="space-y-1 mt-2">
+                {bien.vendeur?.telephone && (
+                  <p className="text-xs text-gray-400"><span className="text-gray-600">Tél:</span> {bien.vendeur.telephone}</p>
+                )}
+                {bien.vendeur?.email && (
+                  <p className="text-xs text-gray-400"><span className="text-gray-600">Email:</span> {bien.vendeur.email}</p>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -353,11 +397,9 @@ export default function BienDetailPage() {
           const isAccepted = m.statut === "ACCEPTE";
           const isActive = activeMove && m.id === activeMove.id && !negotiationDone && !waitingNewOfferFrom;
 
-          // Position: ACQUEREUR on LEFT, VENDEUR on RIGHT
-          let posClass = isFromAcq ? "justify-start" : "justify-end"; // acq→LEFT, vend→RIGHT
+          let posClass = isFromAcq ? "justify-start" : "justify-end";
           if (isAccepted) posClass = "justify-center";
 
-          // Card classes: left border for ACQUEREUR, right border for VENDEUR
           let borderClass = isFromAcq ? "border-l-4 border-l-indigo-500" : "border-r-4 border-r-orange-500";
           let bgClass = isFromAcq ? "bg-indigo-500/5 border-indigo-500/20" : "bg-orange-500/5 border-orange-500/20";
           if (isAccepted) {
@@ -366,16 +408,13 @@ export default function BienDetailPage() {
           }
           let opacityClass = isRefused ? "opacity-40" : "";
 
-          // Amount color
           let amountColor = isFromAcq ? "text-indigo-400" : "text-orange-400";
           if (isRefused) amountColor = "text-gray-500 line-through";
           if (isAccepted) amountColor = "text-green-400";
 
-          // Text alignment: left for ACQUEREUR, right for VENDEUR
           let textAlign = isFromAcq ? "text-left" : "text-right";
           if (isAccepted) textAlign = "text-center";
 
-          // Camp tag
           const campTag = isFromAcq
             ? <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">ACQ</span>
             : <span className="text-[9px] font-bold uppercase tracking-wider text-orange-400 bg-orange-500/10 px-1.5 py-0.5 rounded">VEND</span>;
@@ -384,7 +423,6 @@ export default function BienDetailPage() {
 
           return (
             <div key={m.id} className={`relative z-10 py-2 flex ${posClass}`}>
-              {/* Timeline dot */}
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                 <div className={`w-3 h-3 rounded-full border-2 ${
                   isRefused ? "w-2 h-2 border-red-500 bg-red-500 opacity-40" :
@@ -392,102 +430,63 @@ export default function BienDetailPage() {
                   isFromAcq ? "border-indigo-500 bg-indigo-500" : "border-orange-500 bg-orange-500"
                 }`}></div>
               </div>
-              {/* Chrono number */}
               <div className="absolute left-1/2 -translate-x-1/2 top-1 text-[9px] text-gray-600 bg-gray-950 px-1 z-30">{m.ordre}</div>
 
-              {/* Card */}
               <div className={`w-[46%] rounded-xl px-4 py-3 border ${borderClass} ${bgClass} ${opacityClass} ${textAlign}`}>
-                {/* Amount */}
                 {m.montant && (
                   <p className={`text-2xl font-extrabold ${amountColor}`}>
                     {formatPrix(m.montant)}
                   </p>
                 )}
 
-                {/* Meta */}
                 <div className={`flex items-center gap-1.5 mt-1 text-[11px] text-gray-500 flex-wrap ${isFromAcq && !isAccepted ? "justify-start" : !isAccepted ? "justify-end" : "justify-center"}`}>
                   {campTag}
                   <span className="bg-gray-800 px-1.5 py-0.5 rounded text-[10px]">#{m.ordre}</span>
                   <span>{typeLabel}</span>
                   {isRefused && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-semibold">Refusé</span>}
-                  {isAccepted && <span className="text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded font-semibold">✓ Accepté</span>}
+                  {isAccepted && <span className="text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded font-semibold">Accepté</span>}
                 </div>
 
-                {/* Comment section - always visible, full opacity */}
-                <div className={isRefused ? "opacity-100" : ""} style={{ opacity: 1 }}>
+                {/* Comment section */}
+                <div style={{ opacity: 1 }}>
                   {commentingMoveId === m.id ? (
                     <div className="flex gap-1 mt-2 items-center">
-                      <input
-                        type="text"
-                        className="bg-gray-950 border border-gray-700 rounded-md px-2 py-1.5 text-xs text-white flex-1 outline-none focus:border-indigo-500"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        placeholder="Raison du refus, note, contexte..."
-                        autoFocus
-                        onKeyDown={(e) => { if (e.key === "Enter") saveComment(); if (e.key === "Escape") setCommentingMoveId(null); }}
-                      />
+                      <input type="text" className="bg-gray-950 border border-gray-700 rounded-md px-2 py-1.5 text-xs text-white flex-1 outline-none focus:border-indigo-500" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Raison du refus, note, contexte..." autoFocus onKeyDown={(e) => { if (e.key === "Enter") saveComment(); if (e.key === "Escape") setCommentingMoveId(null); }} />
                       <button onClick={saveComment} className="bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-md">OK</button>
                       <button onClick={() => setCommentingMoveId(null)} className="text-gray-500 text-xs border border-gray-700 px-2 py-1.5 rounded-md">✗</button>
                     </div>
                   ) : m.commentaire ? (
-                    <div
-                      className="mt-2 text-xs text-gray-400 italic bg-white/5 px-2 py-1.5 rounded border-l-2 border-gray-700 cursor-pointer hover:border-indigo-500"
-                      onClick={() => startComment(m.id, m.commentaire)}
-                      title="Cliquer pour modifier"
-                    >
+                    <div className="mt-2 text-xs text-gray-400 italic bg-white/5 px-2 py-1.5 rounded border-l-2 border-gray-700 cursor-pointer hover:border-indigo-500" onClick={() => startComment(m.id, m.commentaire)} title="Cliquer pour modifier">
                       &ldquo;{m.commentaire}&rdquo;
                     </div>
                   ) : (
-                    <button
-                      className="mt-2 text-[11px] text-gray-500 bg-gray-800/50 border border-gray-700/50 px-2 py-1 rounded hover:text-white hover:border-gray-500 transition-colors"
-                      onClick={() => startComment(m.id, "")}
-                    >
-                      💬 Commentaire
+                    <button className="mt-2 text-[11px] text-gray-500 bg-gray-800/50 border border-gray-700/50 px-2 py-1 rounded hover:text-white hover:border-gray-500 transition-colors" onClick={() => startComment(m.id, "")}>
+                      Commentaire
                     </button>
                   )}
                 </div>
 
-                {/* ACTION BUTTONS - only on active offer */}
+                {/* ACTION BUTTONS */}
                 {isActive && (
                   <div className="mt-3">
                     {editingMoveId === m.id ? (
                       <div className={`flex gap-1.5 items-center ${isFromAcq ? "justify-start" : "justify-end"}`}>
-                        <input
-                          type="number"
-                          className="bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none focus:border-indigo-500"
-                          value={editAmount}
-                          onChange={(e) => setEditAmount(e.target.value)}
-                          autoFocus
-                          onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelUI(); }}
-                        />
+                        <input type="number" className="bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none focus:border-indigo-500" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} autoFocus onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelUI(); }} />
                         <button onClick={saveEdit} className="bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg">OK</button>
                         <button onClick={cancelUI} className="text-gray-500 text-xs border border-gray-700 px-2 py-1.5 rounded-lg">Annuler</button>
                       </div>
                     ) : uiMode === "counter" ? (
                       <div className={`flex gap-1.5 items-center mt-1 ${isFromAcq ? "justify-start" : "justify-end"}`}>
-                        <input
-                          type="number"
-                          className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${pendingCounterCamp === "VENDEUR" ? "focus:border-orange-500" : "focus:border-indigo-500"}`}
-                          value={counterAmount}
-                          onChange={(e) => setCounterAmount(e.target.value)}
-                          placeholder="Montant"
-                          autoFocus
-                          onKeyDown={(e) => { if (e.key === "Enter") submitCounterOffer(); if (e.key === "Escape") cancelUI(); }}
-                        />
-                        <button
-                          onClick={submitCounterOffer}
-                          className={`text-white text-xs font-bold px-3 py-1.5 rounded-lg ${pendingCounterCamp === "VENDEUR" ? "bg-orange-500" : "bg-indigo-500"}`}
-                        >
-                          Envoyer
-                        </button>
+                        <input type="number" className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${pendingCounterCamp === "VENDEUR" ? "focus:border-orange-500" : "focus:border-indigo-500"}`} value={counterAmount} onChange={(e) => setCounterAmount(e.target.value)} placeholder="Montant" autoFocus onKeyDown={(e) => { if (e.key === "Enter") submitCounterOffer(); if (e.key === "Escape") cancelUI(); }} />
+                        <button onClick={submitCounterOffer} className={`text-white text-xs font-bold px-3 py-1.5 rounded-lg ${pendingCounterCamp === "VENDEUR" ? "bg-orange-500" : "bg-indigo-500"}`}>Envoyer</button>
                         <button onClick={cancelUI} className="text-gray-500 text-xs border border-gray-700 px-2 py-1.5 rounded-lg">Annuler</button>
                       </div>
                     ) : (
                       <div className={`flex gap-1.5 flex-wrap ${isFromAcq ? "justify-start" : "justify-end"}`}>
-                        <button onClick={() => handleAccept(m.id)} className="bg-green-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-600 transition">Accepter ✓</button>
-                        <button onClick={() => handleRefuse(m.id, m.camp)} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-600 transition">Refuser ✗</button>
-                        <button onClick={() => handleCounterOffer(m.id)} className="bg-gray-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 transition">Contre-offre →</button>
-                        <button onClick={() => startEdit(m.id, m.montant)} className="text-gray-500 text-[10px] hover:text-white" title="Modifier le montant">✏️</button>
+                        <button onClick={() => handleAccept(m.id)} className="bg-green-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-600 transition">Accepter</button>
+                        <button onClick={() => handleRefuse(m.id, m.camp)} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-600 transition">Refuser</button>
+                        <button onClick={() => handleCounterOffer(m.id)} className="bg-gray-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 transition">Contre-offre</button>
+                        <button onClick={() => startEdit(m.id, m.montant)} className="text-gray-500 text-[10px] hover:text-white" title="Modifier">✏️</button>
                       </div>
                     )}
                   </div>
@@ -497,7 +496,7 @@ export default function BienDetailPage() {
           );
         })}
 
-        {/* NEW OFFER zone (after simple refuse) */}
+        {/* NEW OFFER zone (after refuse) */}
         {waitingNewOfferFrom && !negotiationDone && (
           <div className={`relative z-10 py-2 flex ${waitingNewOfferFrom === "ACQUEREUR" ? "justify-start" : "justify-end"}`}>
             <div className={`w-[46%] rounded-xl px-4 py-3 border-2 border-dashed ${
@@ -506,50 +505,23 @@ export default function BienDetailPage() {
               <p className="text-xs text-gray-400 mb-2">
                 Au tour de <strong className={waitingNewOfferFrom === "ACQUEREUR" ? "text-indigo-400" : "text-orange-400"}>
                   {waitingNewOfferFrom === "ACQUEREUR" ? "l'acquéreur" : "du vendeur"}
-                </strong> de faire une nouvelle offre
+                </strong>
               </p>
               <div className={`flex gap-1.5 items-center ${waitingNewOfferFrom === "VENDEUR" ? "justify-end" : "justify-start"}`}>
-                <input
-                  type="number"
-                  className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${
-                    waitingNewOfferFrom === "VENDEUR" ? "focus:border-orange-500" : "focus:border-indigo-500"
-                  }`}
-                  value={newOfferAmount}
-                  onChange={(e) => setNewOfferAmount(e.target.value)}
-                  placeholder="Montant"
-                  autoFocus
-                  onKeyDown={(e) => { if (e.key === "Enter") submitNewOffer(); if (e.key === "Escape") { setWaitingNewOfferFrom(null); setUiMode("idle"); } }}
-                />
-                <button
-                  onClick={submitNewOffer}
-                  className={`text-white text-xs font-bold px-3 py-1.5 rounded-lg ${
-                    waitingNewOfferFrom === "VENDEUR" ? "bg-orange-500" : "bg-indigo-500"
-                  }`}
-                >
-                  Offrir →
-                </button>
+                <input type="number" className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${waitingNewOfferFrom === "VENDEUR" ? "focus:border-orange-500" : "focus:border-indigo-500"}`} value={newOfferAmount} onChange={(e) => setNewOfferAmount(e.target.value)} placeholder="Montant" autoFocus onKeyDown={(e) => { if (e.key === "Enter") submitNewOffer(); if (e.key === "Escape") { setWaitingNewOfferFrom(null); setUiMode("idle"); } }} />
+                <button onClick={submitNewOffer} className={`text-white text-xs font-bold px-3 py-1.5 rounded-lg ${waitingNewOfferFrom === "VENDEUR" ? "bg-orange-500" : "bg-indigo-500"}`}>Offrir</button>
               </div>
             </div>
           </div>
         )}
 
-        {/* FIRST OFFER (no moves yet) */}
+        {/* FIRST OFFER */}
         {chronoMoves.length === 0 && (
           <div className="text-center py-8">
             <p className="text-sm text-gray-400 mb-3">L&apos;acquéreur fait sa première offre</p>
             <div className="flex gap-2 justify-center items-center">
-              <input
-                type="number"
-                className="bg-gray-950 border-2 border-indigo-500 rounded-xl px-4 py-2.5 text-xl font-bold text-indigo-400 w-44 text-center outline-none"
-                value={firstOfferAmount}
-                onChange={(e) => setFirstOfferAmount(e.target.value)}
-                placeholder="350000"
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter") handleFirstOffer(); }}
-              />
-              <button onClick={handleFirstOffer} className="bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm">
-                Offrir →
-              </button>
+              <input type="number" className="bg-gray-950 border-2 border-indigo-500 rounded-xl px-4 py-2.5 text-xl font-bold text-indigo-400 w-44 text-center outline-none" value={firstOfferAmount} onChange={(e) => setFirstOfferAmount(e.target.value)} placeholder="350000" autoFocus onKeyDown={(e) => { if (e.key === "Enter") handleFirstOffer(); }} />
+              <button onClick={handleFirstOffer} className="bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm">Offrir</button>
             </div>
           </div>
         )}
@@ -583,64 +555,73 @@ export default function BienDetailPage() {
         })()}
       </div>
 
-      {/* ===== PRIX FINAL EN BAS ===== */}
-      {negotiationDone && (
-        <div className="text-center py-4 border-t border-gray-800 mt-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wider">Prix d&apos;achat négocié</p>
-          <p className="text-3xl font-extrabold text-green-400">
-            {formatPrix(bien.negociations.find((m: any) => m.statut === "ACCEPTE")?.montant || bien.prixActuel)}
-          </p>
-        </div>
-      )}
-
-      {/* ===== INFO VENDEUR ===== */}
-      <div className="mt-8 bg-gray-900/50 border border-gray-800 rounded-xl p-4">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="text-sm font-semibold text-orange-400 flex items-center gap-2">
-            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-            Vendeur
+      {/* ===== PANNEAUX COMMENTAIRES : NÉGO (gauche) | VENDEUR (droite) ===== */}
+      <div className="grid grid-cols-2 gap-4 mt-6">
+        {/* LEFT: Fil chronologique des commentaires de négociation */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 max-h-80 overflow-y-auto">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
+            Fil de négociation
           </h3>
-          <button onClick={() => setEditVendeur(!editVendeur)} className="text-xs text-indigo-400 hover:underline">
-            {editVendeur ? "Annuler" : "Modifier"}
-          </button>
+          {negoComments.length === 0 ? (
+            <p className="text-xs text-gray-600 italic">Aucun commentaire pour le moment</p>
+          ) : (
+            <div className="space-y-2">
+              {negoComments.map((m: any) => (
+                <div key={m.id} className={`text-xs px-3 py-2 rounded-lg border-l-2 ${
+                  m.camp === "ACQUEREUR" ? "border-l-indigo-500 bg-indigo-500/5" : "border-l-orange-500 bg-orange-500/5"
+                }`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[9px] font-bold uppercase ${m.camp === "ACQUEREUR" ? "text-indigo-400" : "text-orange-400"}`}>
+                      {m.camp === "ACQUEREUR" ? "ACQ" : "VEND"} #{m.ordre}
+                    </span>
+                    {m.montant && <span className="text-gray-500">{formatPrix(m.montant)}</span>}
+                    {m.statut === "REFUS" && <span className="text-red-400 text-[9px]">Refusé</span>}
+                    {m.statut === "ACCEPTE" && <span className="text-green-400 text-[9px]">Accepté</span>}
+                  </div>
+                  <p className="text-gray-300 italic">&ldquo;{m.commentaire}&rdquo;</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {editVendeur ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+
+        {/* RIGHT: Notes et contexte vendeur */}
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 max-h-80 overflow-y-auto">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-2">
+            <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+            Notes vendeur
+          </h3>
+          {editVendeur ? (
+            <div className="space-y-2">
               <div>
-                <label className="block text-[10px] text-gray-500 mb-1">Nom</label>
-                <input value={vendeurForm.nom} onChange={(e) => setVendeurForm({ ...vendeurForm, nom: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-500" />
+                <label className="block text-[10px] text-gray-500 mb-1">Notes</label>
+                <textarea value={vendeurForm.notes} onChange={(e) => setVendeurForm({ ...vendeurForm, notes: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-orange-500" rows={4} placeholder="Notes sur le vendeur..." />
               </div>
               <div>
-                <label className="block text-[10px] text-gray-500 mb-1">Téléphone</label>
-                <input value={vendeurForm.telephone} onChange={(e) => setVendeurForm({ ...vendeurForm, telephone: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-500" />
+                <label className="block text-[10px] text-gray-500 mb-1">Contexte de vente</label>
+                <textarea value={vendeurForm.contexte} onChange={(e) => setVendeurForm({ ...vendeurForm, contexte: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-orange-500" rows={3} placeholder="Pourquoi vend-il ? Urgence ? Divorce ? Succession ?..." />
               </div>
+              <button onClick={saveVendeur} className="bg-orange-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg w-full">Sauvegarder</button>
             </div>
+          ) : (
             <div>
-              <label className="block text-[10px] text-gray-500 mb-1">Email</label>
-              <input value={vendeurForm.email} onChange={(e) => setVendeurForm({ ...vendeurForm, email: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-500" />
+              {bien.vendeur?.notes ? (
+                <p className="text-xs text-gray-300 whitespace-pre-wrap mb-3">{bien.vendeur.notes}</p>
+              ) : (
+                <p className="text-xs text-gray-600 italic mb-2">Aucune note</p>
+              )}
+              {bien.vendeur?.contexte && (
+                <div className="border-t border-gray-800 pt-2 mt-2">
+                  <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">Contexte</p>
+                  <p className="text-xs text-gray-400 italic">{bien.vendeur.contexte}</p>
+                </div>
+              )}
+              <button onClick={() => setEditVendeur(true)} className="mt-3 text-[11px] text-orange-400 hover:text-orange-300 border border-orange-500/30 px-3 py-1 rounded-lg hover:bg-orange-500/10 transition">
+                Modifier les notes
+              </button>
             </div>
-            <div>
-              <label className="block text-[10px] text-gray-500 mb-1">Notes</label>
-              <textarea value={vendeurForm.notes} onChange={(e) => setVendeurForm({ ...vendeurForm, notes: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-500" rows={3} />
-            </div>
-            <div>
-              <label className="block text-[10px] text-gray-500 mb-1">Contexte de vente</label>
-              <textarea value={vendeurForm.contexte} onChange={(e) => setVendeurForm({ ...vendeurForm, contexte: e.target.value })} className="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-indigo-500" rows={2} />
-            </div>
-            <button onClick={saveVendeur} className="bg-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-lg">Sauvegarder</button>
-          </div>
-        ) : (
-          <div className="text-sm">
-            <p className="font-medium text-white">{bien.vendeur?.nom || "Vendeur inconnu"}</p>
-            <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-gray-400">
-              <div><span className="text-gray-600">Tél:</span> {bien.vendeur?.telephone || "-"}</div>
-              <div><span className="text-gray-600">Email:</span> {bien.vendeur?.email || "-"}</div>
-            </div>
-            {bien.vendeur?.notes && <p className="text-xs text-gray-400 mt-2 whitespace-pre-wrap">{bien.vendeur.notes}</p>}
-            {bien.vendeur?.contexte && <p className="text-xs text-gray-500 mt-1 italic">{bien.vendeur.contexte}</p>}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* ===== INFO BIEN ===== */}
