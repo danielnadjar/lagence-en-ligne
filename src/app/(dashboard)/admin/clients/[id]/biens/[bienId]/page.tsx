@@ -12,7 +12,7 @@ import {
 } from "@/lib/types";
 
 // ============================================================
-// NÉGOCIATION PING-PONG v3
+// NÉGOCIATION PING-PONG v4 - Acquéreur LEFT, Vendeur RIGHT
 // ============================================================
 
 export default function BienDetailPage() {
@@ -294,16 +294,37 @@ export default function BienDetailPage() {
         </div>
       </div>
 
-      {/* ===== PRIX AFFICHÉ DU BIEN - TOUT EN HAUT ===== */}
-      <div className="text-center py-5 mb-2">
-        <p className="text-xs text-gray-500 uppercase tracking-widest">Prix affiché du bien</p>
-        <p className="text-4xl font-extrabold text-white mt-1">{formatPrix(bien.prixAffiche)}</p>
-        <p className="text-xs text-gray-500 mt-1">
-          {bien.typeBien ? TYPE_BIEN_LABELS[bien.typeBien as keyof typeof TYPE_BIEN_LABELS] || bien.typeBien : ""}
-          {bien.surface ? ` · ${bien.surface}m²` : ""}
-          {bien.ville ? ` · ${bien.ville}` : ""}
-          {bien.codePostal ? ` ${bien.codePostal}` : ""}
-        </p>
+      {/* ===== PRIX AFFICHÉ DU BIEN + VENDEUR INFO EN HAUT ===== */}
+      <div className="flex items-start justify-between gap-6 py-5 mb-2">
+        {/* LEFT: Prix du bien */}
+        <div className="flex-1">
+          <p className="text-xs text-gray-500 uppercase tracking-widest">Prix affiché du bien</p>
+          <p className="text-4xl font-extrabold text-white mt-1">{formatPrix(bien.prixAffiche)}</p>
+          <p className="text-xs text-gray-500 mt-1">
+            {bien.typeBien ? TYPE_BIEN_LABELS[bien.typeBien as keyof typeof TYPE_BIEN_LABELS] || bien.typeBien : ""}
+            {bien.surface ? ` · ${bien.surface}m²` : ""}
+            {bien.ville ? ` · ${bien.ville}` : ""}
+            {bien.codePostal ? ` ${bien.codePostal}` : ""}
+          </p>
+        </div>
+
+        {/* RIGHT: Vendeur info (read-only summary) */}
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 w-64 flex-shrink-0">
+          <p className="text-[10px] text-orange-400 uppercase tracking-wider font-bold mb-2">Vendeur</p>
+          <p className="font-semibold text-white text-sm">{bien.vendeur?.nom || "Non renseigné"}</p>
+          <div className="space-y-1 mt-2">
+            {bien.vendeur?.telephone && (
+              <p className="text-xs text-gray-400">
+                <span className="text-gray-600">Tél:</span> {bien.vendeur.telephone}
+              </p>
+            )}
+            {bien.vendeur?.email && (
+              <p className="text-xs text-gray-400">
+                <span className="text-gray-600">Email:</span> {bien.vendeur.email}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ===== LÉGENDE ===== */}
@@ -331,12 +352,12 @@ export default function BienDetailPage() {
           const isAccepted = m.statut === "ACCEPTE";
           const isActive = activeMove && m.id === activeMove.id && !negotiationDone && !waitingNewOfferFrom;
 
-          // Position: offre atterrit du côté du répondeur
-          let posClass = isFromAcq ? "justify-end" : "justify-start"; // acq→droite, vend→gauche
+          // Position: ACQUEREUR on LEFT, VENDEUR on RIGHT
+          let posClass = isFromAcq ? "justify-start" : "justify-end"; // acq→LEFT, vend→RIGHT
           if (isAccepted) posClass = "justify-center";
 
-          // Card classes
-          let borderClass = isFromAcq ? "border-r-4 border-r-orange-500" : "border-l-4 border-l-indigo-500";
+          // Card classes: left border for ACQUEREUR, right border for VENDEUR
+          let borderClass = isFromAcq ? "border-l-4 border-l-indigo-500" : "border-r-4 border-r-orange-500";
           let bgClass = isFromAcq ? "bg-indigo-500/5 border-indigo-500/20" : "bg-orange-500/5 border-orange-500/20";
           if (isAccepted) {
             borderClass = "border-2 border-green-500";
@@ -349,8 +370,8 @@ export default function BienDetailPage() {
           if (isRefused) amountColor = "text-gray-500 line-through";
           if (isAccepted) amountColor = "text-green-400";
 
-          // Text alignment
-          let textAlign = isFromAcq ? "text-right" : "text-left";
+          // Text alignment: left for ACQUEREUR, right for VENDEUR
+          let textAlign = isFromAcq ? "text-left" : "text-right";
           if (isAccepted) textAlign = "text-center";
 
           // Camp tag
@@ -383,7 +404,7 @@ export default function BienDetailPage() {
                 )}
 
                 {/* Meta */}
-                <div className={`flex items-center gap-1.5 mt-1 text-[11px] text-gray-500 flex-wrap ${isFromAcq && !isAccepted ? "justify-end" : isAccepted ? "justify-center" : ""}`}>
+                <div className={`flex items-center gap-1.5 mt-1 text-[11px] text-gray-500 flex-wrap ${isFromAcq && !isAccepted ? "justify-start" : !isAccepted ? "justify-end" : "justify-center"}`}>
                   {campTag}
                   <span className="bg-gray-800 px-1.5 py-0.5 rounded text-[10px]">#{m.ordre}</span>
                   <span>{typeLabel}</span>
@@ -429,7 +450,7 @@ export default function BienDetailPage() {
                 {isActive && (
                   <div className="mt-3">
                     {editingMoveId === m.id ? (
-                      <div className={`flex gap-1.5 items-center ${isFromAcq ? "justify-end" : ""}`}>
+                      <div className={`flex gap-1.5 items-center ${isFromAcq ? "justify-start" : "justify-end"}`}>
                         <input
                           type="number"
                           className="bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none focus:border-indigo-500"
@@ -442,7 +463,7 @@ export default function BienDetailPage() {
                         <button onClick={cancelUI} className="text-gray-500 text-xs border border-gray-700 px-2 py-1.5 rounded-lg">Annuler</button>
                       </div>
                     ) : uiMode === "counter" ? (
-                      <div className={`flex gap-1.5 items-center mt-1 ${isFromAcq ? "justify-end" : ""}`}>
+                      <div className={`flex gap-1.5 items-center mt-1 ${isFromAcq ? "justify-start" : "justify-end"}`}>
                         <input
                           type="number"
                           className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${pendingCounterCamp === "VENDEUR" ? "focus:border-orange-500" : "focus:border-indigo-500"}`}
@@ -461,7 +482,7 @@ export default function BienDetailPage() {
                         <button onClick={cancelUI} className="text-gray-500 text-xs border border-gray-700 px-2 py-1.5 rounded-lg">Annuler</button>
                       </div>
                     ) : (
-                      <div className={`flex gap-1.5 flex-wrap ${isFromAcq ? "justify-end" : ""}`}>
+                      <div className={`flex gap-1.5 flex-wrap ${isFromAcq ? "justify-start" : "justify-end"}`}>
                         <button onClick={() => handleAccept(m.id)} className="bg-green-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-green-600 transition">Accepter ✓</button>
                         <button onClick={() => handleRefuse(m.id, m.camp)} className="bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-600 transition">Refuser ✗</button>
                         <button onClick={() => handleCounterOffer(m.id)} className="bg-gray-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 transition">Contre-offre →</button>
@@ -479,14 +500,14 @@ export default function BienDetailPage() {
         {waitingNewOfferFrom && !negotiationDone && (
           <div className={`relative z-10 py-2 flex ${waitingNewOfferFrom === "ACQUEREUR" ? "justify-start" : "justify-end"}`}>
             <div className={`w-[46%] rounded-xl px-4 py-3 border-2 border-dashed ${
-              waitingNewOfferFrom === "ACQUEREUR" ? "border-indigo-500/50 bg-indigo-500/5" : "border-orange-500/50 bg-orange-500/5"
-            } ${waitingNewOfferFrom === "VENDEUR" ? "text-right" : ""}`}>
+              waitingNewOfferFrom === "ACQUEREUR" ? "border-indigo-500/50 bg-indigo-500/5 text-left" : "border-orange-500/50 bg-orange-500/5 text-right"
+            }`}>
               <p className="text-xs text-gray-400 mb-2">
                 Au tour de <strong className={waitingNewOfferFrom === "ACQUEREUR" ? "text-indigo-400" : "text-orange-400"}>
                   {waitingNewOfferFrom === "ACQUEREUR" ? "l'acquéreur" : "du vendeur"}
                 </strong> de faire une nouvelle offre
               </p>
-              <div className={`flex gap-1.5 items-center ${waitingNewOfferFrom === "VENDEUR" ? "justify-end" : ""}`}>
+              <div className={`flex gap-1.5 items-center ${waitingNewOfferFrom === "VENDEUR" ? "justify-end" : "justify-start"}`}>
                 <input
                   type="number"
                   className={`bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-base font-bold text-white w-36 text-center outline-none ${

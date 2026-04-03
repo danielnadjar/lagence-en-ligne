@@ -7,46 +7,60 @@ import { MANDAT_TEMPLATE_DEFAULT } from "@/lib/mandat-template";
 
 // GET /api/parametres - Récupérer les paramètres
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdmin(session.user as any)) {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !isAdmin(session.user as any)) {
+      return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
+    }
 
-  let params = await prisma.parametres.findUnique({
-    where: { id: "default" },
-  });
-
-  // Si aucun paramètre n'existe, retourner le template par défaut
-  if (!params) {
-    return NextResponse.json({
-      mandatTexte: MANDAT_TEMPLATE_DEFAULT,
+    let params = await prisma.parametres.findUnique({
+      where: { id: "default" },
     });
-  }
 
-  return NextResponse.json({
-    mandatTexte: params.mandatTexte || MANDAT_TEMPLATE_DEFAULT,
-  });
+    // Si aucun paramètre n'existe, retourner le template par défaut
+    if (!params) {
+      return NextResponse.json({
+        mandatTexte: MANDAT_TEMPLATE_DEFAULT,
+      });
+    }
+
+    return NextResponse.json({
+      mandatTexte: params.mandatTexte || MANDAT_TEMPLATE_DEFAULT,
+    });
+  } catch (e: unknown) {
+    return NextResponse.json(
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
+  }
 }
 
 // PUT /api/parametres - Mettre à jour les paramètres
 export async function PUT(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || !isAdmin(session.user as any)) {
-    return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user || !isAdmin(session.user as any)) {
+      return NextResponse.json({ error: "Accès interdit" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { mandatTexte } = body;
+
+    if (typeof mandatTexte !== "string") {
+      return NextResponse.json({ error: "Texte du mandat requis" }, { status: 400 });
+    }
+
+    const params = await prisma.parametres.upsert({
+      where: { id: "default" },
+      update: { mandatTexte },
+      create: { id: "default", mandatTexte },
+    });
+
+    return NextResponse.json({ ok: true, mandatTexte: params.mandatTexte });
+  } catch (e: unknown) {
+    return NextResponse.json(
+      { error: "Erreur serveur", details: e instanceof Error ? e.message : "unknown" },
+      { status: 500 }
+    );
   }
-
-  const body = await req.json();
-  const { mandatTexte } = body;
-
-  if (typeof mandatTexte !== "string") {
-    return NextResponse.json({ error: "Texte du mandat requis" }, { status: 400 });
-  }
-
-  const params = await prisma.parametres.upsert({
-    where: { id: "default" },
-    update: { mandatTexte },
-    create: { id: "default", mandatTexte },
-  });
-
-  return NextResponse.json({ ok: true, mandatTexte: params.mandatTexte });
 }
