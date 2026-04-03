@@ -1,0 +1,173 @@
+// CRM Négociateur - Schéma de base de données
+// PostgreSQL via Supabase
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// UTILISATEURS ET AUTHENTIFICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  prenom        String
+  nom           String
+  telephone     String?
+  role          String    @default("NEGOCIATEUR") // ADMIN, SOUS_ADMIN, NEGOCIATEUR
+  actif         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  client        Client?
+  negotiations  NegociationMove[] @relation("AuthorMoves")
+  clientsAssignes Client[] @relation("NegociateurClients")
+}
+
+// ============================================
+// CLIENTS (ACQUÉREURS)
+// ============================================
+
+model Client {
+  id            String    @id @default(cuid())
+  numero        String    @unique // Numéro de série unique (ex: ACQ-00001)
+  prenom        String
+  nom           String
+  email         String    @unique
+  telephone     String?
+  budgetMax     Float?    // Budget maximum en euros
+  prixIdeal     Float?    // Prix idéal souhaité
+  notes         String?   // Notes synthétiques
+  source        String    @default("MANUEL") // QCM, SITE, CRM, EXTERIEUR, LOVABLE, MANUEL
+  statut        String    @default("NOUVEAU") // NOUVEAU, EN_COURS, CLOS, INACTIF
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Lien vers le compte utilisateur (optionnel)
+  userId        String?   @unique
+  user          User?     @relation(fields: [userId], references: [id])
+
+  // Négociateur assigné
+  negociateurId String?
+  negociateur   User?     @relation("NegociateurClients", fields: [negociateurId], references: [id])
+
+  // Mandat de recherche
+  mandatNumero      String?   @unique // Numéro unique du mandat (ex: MR-2026-00001)
+  mandatSigne       Boolean   @default(false)
+  mandatDate        DateTime? // Date et heure exacte de la signature
+  mandatSignature   String?   // Signature base64 (PNG du canvas)
+  mandatIP          String?   // Adresse IP au moment de la signature
+  mandatUserAgent   String?   // Navigateur utilisé pour signer
+  mandatToken       String?   @unique // Token unique pour le lien de signature
+  mandatPdfPath     String?   // Chemin du PDF généré
+
+  // Relations
+  biens         Bien[]
+}
+
+// ============================================
+// BIENS IMMOBILIERS
+// ============================================
+
+model Bien {
+  id            String    @id @default(cuid())
+  lienAnnonce   String?   // URL de l'annonce
+  prixAffiche   Float     // Prix affiché initial
+  prixActuel    Float?    // Dernier prix en cours
+  ville         String?
+  codePostal    String?
+  localisation  String?   // Adresse ou description
+  surface       Float?    // Surface en m²
+  typeBien      String?   // APPARTEMENT, MAISON, IMMEUBLE, FONDS_COMMERCE, LOCAL_COMMERCIAL
+  statut        String    @default("NOUVEAU") // NOUVEAU, A_ANALYSER, EN_ATTENTE_INFOS, NEGO_DEMARREE, EN_COURS_NEGO, EN_ATTENTE_VENDEUR, EN_ATTENTE_ACQUEREUR, ACCORD_TROUVE, REFUS, SANS_SUITE, CLOTURE, ABANDONNE
+  commentaireFinal String? // Commentaire final visible par le client
+  sourceData    String?   // D'où viennent les données (manuel, IA, etc.)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relation avec client acquéreur
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Relations
+  vendeur       Vendeur?
+  photos        Photo[]
+  negociations  NegociationMove[]
+}
+
+// ============================================
+// VENDEURS (un vendeur par bien)
+// ============================================
+
+model Vendeur {
+  id            String    @id @default(cuid())
+  nom           String?
+  telephone     String?
+  email         String?
+  notes         String?   // Notes libres sur le vendeur
+  contexte      String?   // Contexte de vente
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relation 1:1 avec bien
+  bienId        String    @unique
+  bien          Bien      @relation(fields: [bienId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NÉGOCIATION (HISTORIQUE PING-PONG)
+// ============================================
+
+model NegociationMove {
+  id            String    @id @default(cuid())
+  ordre         Int       // Numéro d'ordre chronologique
+  camp          String    // ACQUEREUR ou VENDEUR
+  typeMove      String    // OFFRE, CONTRE_OFFRE, REPONSE, COMMENTAIRE
+  montant       Float?    // Montant proposé (si applicable)
+  statut        String?   // ACCEPTE, REFLECHIR, REFUS, SANS_SUITE
+  commentaire   String?   // Commentaire associé
+  interne       Boolean   @default(false) // Note interne (invisible client)
+  createdAt     DateTime  @default(now())
+
+  // Relation avec bien
+  bienId        String
+  bien          Bien      @relation(fields: [bienId], references: [id], onDelete: Cascade)
+
+  // Qui a saisi ce mouvement
+  auteurId      String?
+  auteur        User?     @relation("AuthorMoves", fields: [auteurId], references: [id])
+}
+
+// ============================================
+// PARAMÈTRES DE L'APPLICATION
+// ============================================
+
+model Parametres {
+  id            String    @id @default("default")
+  mandatTexte   String?   // Texte personnalisé du mandat (remplace le template par défaut)
+  updatedAt     DateTime  @updatedAt
+}
+
+// ============================================
+// PHOTOS DES BIENS
+// ============================================
+
+model Photo {
+  id            String    @id @default(cuid())
+  url           String    // Chemin ou URL de la photo
+  nom           String?   // Nom du fichier
+  createdAt     DateTime  @default(now())
+
+  // Relation avec bien
+  bienId        String
+  bien          Bien      @relation(fields: [bienId], references: [id], onDelete: Cascade)
+}
