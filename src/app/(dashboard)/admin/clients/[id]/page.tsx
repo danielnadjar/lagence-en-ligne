@@ -645,69 +645,6 @@ function AddBienModal({
 }
 
 // ===== COMPOSANT MANDAT =====
-function MandatSection({ client, clientId,     setForm({ ...form, typeBien: e.target.value })
-                }
-                className="select-field"
-              >
-                <option value="APPARTEMENT">Appartement</option>
-                <option value="MAISON">Maison</option>
-                <option value="IMMEUBLE">Immeuble</option>
-                <option value="FONDS_COMMERCE">Fonds de commerce</option>
-                <option value="LOCAL_COMMERCIAL">Local commercial</option>
-                <option value="AUTRE">Autre</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-dark-300 mb-1">Ville</label>
-              <input
-                value={form.ville}
-                onChange={(e) => setForm({ ...form, ville: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-dark-300 mb-1">
-                Code postal
-              </label>
-              <input
-                value={form.codePostal}
-                onChange={(e) =>
-                  setForm({ ...form, codePostal: e.target.value })
-                }
-                className="input-field"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-dark-300 mb-1">
-                Surface m²
-              </label>
-              <input
-                type="number"
-                value={form.surface}
-                onChange={(e) => setForm({ ...form, surface: e.target.value })}
-                className="input-field"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-3 justify-end">
-            <button type="button" onClick={onClose} className="btn-secondary">
-              Annuler
-            </button>
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? "Ajout..." : "Ajouter le bien"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ===== COMPOSANT MANDAT =====
 function MandatSection({ client, clientId, onUpdate }: { client: any; clientId: string; onUpdate: () => void }) {
   const [signUrl, setSignUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
