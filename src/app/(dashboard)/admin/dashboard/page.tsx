@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold mb-6">Tableau de bord</h1>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <div className="card">
             <p className="text-dark-400 text-sm">Clients</p>
             <p className="text-3xl font-bold text-white mt-1">{totalClients}</p>
@@ -86,8 +86,14 @@ export default async function DashboardPage() {
             <p className="text-3xl font-bold text-primary-400 mt-1">
               {formatPrix(totalCommissions)}
             </p>
+          </div>
+          <div className="card">
+            <p className="text-dark-400 text-sm">Total économisé</p>
+            <p className="text-3xl font-bold text-green-400 mt-1">
+              {formatPrix(totalEconomies)}
+            </p>
             <p className="text-xs text-dark-400 mt-1">
-              Économies: {formatPrix(totalEconomies)}
+              Sur {biensAccord.length} accord(s)
             </p>
           </div>
         </div>

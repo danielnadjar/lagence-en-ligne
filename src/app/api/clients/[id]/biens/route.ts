@@ -24,6 +24,7 @@ export async function POST(
       localisation,
       surface,
       typeBien,
+      vendeur,
     } = body;
 
     if (!prixAffiche) {
@@ -43,11 +44,21 @@ export async function POST(
         surface: surface ? parseFloat(surface) : null,
         typeBien: typeBien || null,
         clientId: params.id,
+        // Créer le vendeur en même temps si des données sont fournies
+        ...(vendeur && (vendeur.nom || vendeur.telephone || vendeur.email)
+          ? {
+              vendeur: {
+                create: {
+                  nom: vendeur.nom || null,
+                  telephone: vendeur.telephone || null,
+                  email: vendeur.email || null,
+                },
+              },
+            }
+          : {}),
       },
+      include: { vendeur: true },
     });
-
-    // Le prix affiché est stocké dans bien.prixAffiche
-    // La négociation commence quand l'acquéreur fait sa première offre via le ping-pong
 
     return NextResponse.json(bien, { status: 201 });
   } catch (e: unknown) {
