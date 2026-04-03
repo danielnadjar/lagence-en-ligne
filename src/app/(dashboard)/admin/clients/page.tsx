@@ -213,20 +213,30 @@ function CreateClientModal({
     setError("");
     setLoading(true);
 
-    const res = await fetch("/api/clients", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error || "Erreur lors de la création");
+      if (!res.ok) {
+        let msg = "Erreur lors de la création";
+        try {
+          const data = await res.json();
+          msg = data.error || msg;
+        } catch {}
+        setError(msg);
+        return;
+      }
+
+      onCreated();
+    } catch (err: any) {
+      console.error("Erreur création client:", err);
+      setError("Erreur réseau. Vérifiez votre connexion et réessayez.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    onCreated();
   };
 
   return (
