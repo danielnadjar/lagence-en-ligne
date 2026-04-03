@@ -171,7 +171,8 @@ export default function BienDetailPage() {
 
   const handleRefuse = async (moveId: string, moveCamp: string) => {
     await updateMoveStatut(moveId, "REFUS");
-    setWaitingNewOfferFrom(moveCamp);
+    // La balle passe au camp OPPOSÉ : si l'acquéreur est refusé, c'est au vendeur de répondre
+    setWaitingNewOfferFrom(moveCamp === "ACQUEREUR" ? "VENDEUR" : "ACQUEREUR");
     setUiMode("newOffer");
   };
 

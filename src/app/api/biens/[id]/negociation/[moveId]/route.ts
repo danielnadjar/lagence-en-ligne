@@ -76,16 +76,16 @@ export async function PATCH(
     // Si le statut passe à REFUS, mettre à jour le statut du bien selon le camp
     if (statut === "REFUS") {
       if (existingMove.camp === "ACQUEREUR") {
-        // L'acquéreur a fait une offre qui est refusée → en attente acquéreur (il doit refaire une offre)
-        await prisma.bien.update({
-          where: { id: bienId },
-          data: { statut: "EN_ATTENTE_ACQUEREUR" },
-        });
-      } else {
-        // Le vendeur a fait une offre qui est refusée → en attente vendeur
+        // L'offre de l'acquéreur est refusée → la balle passe au vendeur (il doit contre-offrir)
         await prisma.bien.update({
           where: { id: bienId },
           data: { statut: "EN_ATTENTE_VENDEUR" },
+        });
+      } else {
+        // L'offre du vendeur est refusée → la balle passe à l'acquéreur (il doit contre-offrir)
+        await prisma.bien.update({
+          where: { id: bienId },
+          data: { statut: "EN_ATTENTE_ACQUEREUR" },
         });
       }
     }
