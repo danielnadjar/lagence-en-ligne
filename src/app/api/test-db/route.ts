@@ -25,6 +25,7 @@ export async function GET() {
     const users = await prisma.user.findMany({
       select: { id: true, email: true, role: true, actif: true },
     });
+<<<<<<< HEAD
     return NextResponse.json({
       status: "OK",
       database: "connected",
@@ -45,5 +46,11 @@ export async function GET() {
         DIRECT_URL: maskUrl(directUrl),
       },
     }, { status: 500 });
+=======
+    return NextResponse.json({ status: "OK", database: "connected", usersCount: users.length, users });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "unknown error";
+    return NextResponse.json({ status: "ERROR", error: msg }, { status: 500 });
+>>>>>>> 0d1e6d633fab9d0d7165e9af302abd8043ada2e5
   }
 }
