@@ -18,9 +18,9 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 flex flex-col overflow-auto">
         <AdBanner slot="crm_negociation__header" />
-        {children}
+        <div className="flex-1 p-6">{children}</div>
         <AdBanner slot="crm_negociation__footer" />
       </main>
     </div>
