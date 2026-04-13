@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { genererNumeroClient } from "@/lib/numero";
 import bcrypt from "bcryptjs";
 
-// POST /api/webhook - Recevoir des leads de Lovable, QCM ou Make
+// POST /api/webhook - Recevoir des leads de Lovable, QCM, Make ou Chatbot
 // Ce endpoint est accessible sans auth (webhook)
 // Protégé par un token simple dans le header
 export async function POST(req: NextRequest) {
@@ -26,16 +26,32 @@ export async function POST(req: NextRequest) {
     source,
     budgetMax,
     prixIdeal,
+    // Champs chatbot
+    ville,
+    typeBien,
+    conversationResume,
+    // Type de client
+    typeClient,
   } = body;
 
   if (!email) {
     return NextResponse.json({ error: "Email requis" }, { status: 400 });
   }
 
+  // Construire les notes à partir du message et/ou du résumé de conversation
+  const notesParts = [];
+  if (conversationResume) notesParts.push(`[Chatbot] ${conversationResume}`);
+  if (ville) notesParts.push(`Ville recherchée : ${ville}`);
+  if (typeBien) notesParts.push(`Type de bien : ${typeBien}`);
+  if (message) notesParts.push(message);
+  const notesFinales = notesParts.length > 0 ? notesParts.join("\n") : null;
+
   // Vérifier si le client existe déjà
   let client = await prisma.client.findUnique({ where: { email } });
+  let isNew = false;
 
   if (!client) {
+    isNew = true;
     const numero = await genererNumeroClient();
 
     // Créer un compte utilisateur
@@ -55,6 +71,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const clientType = typeClient || "ACQUEREUR";
     client = await prisma.client.create({
       data: {
         numero,
@@ -64,11 +81,30 @@ export async function POST(req: NextRequest) {
         telephone: telephone || null,
         budgetMax: budgetMax ? parseFloat(budgetMax) : null,
         prixIdeal: prixIdeal ? parseFloat(prixIdeal) : null,
-        notes: message || null,
+        notes: notesFinales,
         source: source || "LOVABLE",
+        typeClient: clientType,
+        statut: "PROSPECT",
         userId: user.id,
       },
     });
+  } else {
+    // Client existant : enrichir les notes si nouvelles infos du chatbot
+    if (notesFinales) {
+      const existingNotes = client.notes || "";
+      await prisma.client.update({
+        where: { id: client.id },
+        data: {
+          notes: existingNotes
+            ? `${existingNotes}\n---\n${notesFinales}`
+            : notesFinales,
+          // Mettre à jour budget/ville si pas encore renseigné
+          ...(budgetMax && !client.budgetMax
+            ? { budgetMax: parseFloat(budgetMax) }
+            : {}),
+        },
+      });
+    }
   }
 
   // Si un lien d'annonce est fourni, créer un bien automatiquement
@@ -79,6 +115,8 @@ export async function POST(req: NextRequest) {
         prixAffiche: 0, // À remplir manuellement ou via IA
         statut: "NOUVEAU",
         sourceData: "webhook",
+        ville: ville || null,
+        typeBien: typeBien || null,
         clientId: client.id,
       },
     });
@@ -89,7 +127,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       clientId: client.id,
       numero: client.numero,
-      message: "Lead reçu et traité",
+      isNew,
+      message: isNew ? "Nouveau lead créé" : "Lead existant enrichi",
     },
     { status: 201 }
   );

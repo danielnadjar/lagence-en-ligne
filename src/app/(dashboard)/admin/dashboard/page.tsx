@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   try {
-    const [totalClients, totalBiens, negoEnCours, accords] = await Promise.all([
+    const [totalClients, totalBiens, negoEnCours, accords, prospects, acquereurs, vendeurs] = await Promise.all([
       prisma.client.count(),
       prisma.bien.count(),
       prisma.bien.count({
@@ -22,6 +22,9 @@ export default async function DashboardPage() {
         },
       }),
       prisma.bien.count({ where: { statut: "ACCORD_TROUVE" } }),
+      prisma.client.count({ where: { statut: "PROSPECT" } }),
+      prisma.client.count({ where: { typeClient: "ACQUEREUR" } }),
+      prisma.client.count({ where: { typeClient: "VENDEUR" } }),
     ]);
 
     // Calculer les commissions totales sur les accords
@@ -70,6 +73,11 @@ export default async function DashboardPage() {
           <div className="card">
             <p className="text-dark-400 text-sm">Clients</p>
             <p className="text-3xl font-bold text-white mt-1">{totalClients}</p>
+            <div className="flex gap-2 mt-1">
+              <span className="text-xs text-blue-400">{acquereurs} acq.</span>
+              <span className="text-xs text-orange-400">{vendeurs} vend.</span>
+              {prospects > 0 && <span className="text-xs text-yellow-400">{prospects} new</span>}
+            </div>
           </div>
           <div className="card">
             <p className="text-dark-400 text-sm">Négociations en cours</p>

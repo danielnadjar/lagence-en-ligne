@@ -34,21 +34,22 @@ model User {
 }
 
 // ============================================
-// CLIENTS (ACQUÉREURS)
+// CLIENTS (ACQUÉREURS & VENDEURS)
 // ============================================
 
 model Client {
   id            String    @id @default(cuid())
-  numero        String    @unique // Numéro de série unique (ex: ACQ-00001)
+  numero        String    @unique // Numéro de série unique (ex: ACQ-00001, VND-00001)
   prenom        String
   nom           String
   email         String    @unique
   telephone     String?
-  budgetMax     Float?    // Budget maximum en euros
-  prixIdeal     Float?    // Prix idéal souhaité
+  budgetMax     Float?    // Budget maximum en euros (acquéreur)
+  prixIdeal     Float?    // Prix idéal souhaité (acquéreur)
   notes         String?   // Notes synthétiques
-  source        String    @default("MANUEL") // QCM, SITE, CRM, EXTERIEUR, LOVABLE, MANUEL
-  statut        String    @default("NOUVEAU") // NOUVEAU, EN_COURS, CLOS, INACTIF
+  source        String    @default("MANUEL") // QCM, SITE, CRM, EXTERIEUR, LOVABLE, MANUEL, CHATBOT, FORMULAIRE
+  typeClient    String    @default("ACQUEREUR") // ACQUEREUR ou VENDEUR
+  statut        String    @default("PROSPECT") // Pipeline Kanban - voir types.ts pour la liste complète
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -60,18 +61,109 @@ model Client {
   negociateurId String?
   negociateur   User?     @relation("NegociateurClients", fields: [negociateurId], references: [id])
 
+  // Infos Vendeur spécifiques
+  prixVente         Float?    // Prix de vente souhaité
+  adresseBien       String?   // Adresse du bien à vendre
+  villeVente        String?   // Ville du bien
+  surfaceBien       Float?    // Surface en m²
+  typeBienVente     String?   // Type de bien à vendre
+  descriptionBien   String?   // Description du bien
+  financementOk     Boolean?  // Financement validé (acquéreur)
+
   // Mandat de recherche
-  mandatNumero      String?   @unique // Numéro unique du mandat (ex: MR-2026-00001)
+  mandatNumero      String?   @unique
   mandatSigne       Boolean   @default(false)
-  mandatDate        DateTime? // Date et heure exacte de la signature
-  mandatSignature   String?   // Signature base64 (PNG du canvas)
-  mandatIP          String?   // Adresse IP au moment de la signature
-  mandatUserAgent   String?   // Navigateur utilisé pour signer
-  mandatToken       String?   @unique // Token unique pour le lien de signature
-  mandatPdfPath     String?   // Chemin du PDF généré
+  mandatDate        DateTime?
+  mandatSignature   String?
+  mandatIP          String?
+  mandatUserAgent   String?
+  mandatToken       String?   @unique
+  mandatPdfPath     String?
 
   // Relations
-  biens         Bien[]
+  biens             Bien[]
+  appels            Appel[]
+  visites           Visite[]
+  photosVente       PhotoVente[]
+  historiquePrix    HistoriquePrix[]
+}
+
+// ============================================
+// APPELS & CONTACTS (suivi téléphonique)
+// ============================================
+
+model Appel {
+  id            String    @id @default(cuid())
+  date          DateTime  @default(now())
+  duree         Int?      // Durée en minutes
+  type          String    @default("ENTRANT") // ENTRANT, SORTANT
+  notes         String?   // Résumé de l'appel
+  interlocuteur String?   // Nom de la personne contactée
+  telephone     String?   // Numéro appelé/appelant
+  createdAt     DateTime  @default(now())
+
+  // Relation avec client
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// VISITES (créneaux et suivi)
+// ============================================
+
+model Visite {
+  id            String    @id @default(cuid())
+  dateVisite    DateTime  // Date et heure de la visite
+  creneau       String?   // Identifiant du créneau (ex: "mardi_matin", "jeudi_aprem")
+  statut        String    @default("PLANIFIEE") // PLANIFIEE, REALISEE, ANNULEE, REPORT
+  compteRendu   String?   // Compte-rendu de la visite
+  avisAcquereur String?   // OUI, NON, REFLEXION
+  montantOffre  Float?    // Si offre suite à la visite
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Visiteur (acquéreur potentiel)
+  visiteurNom       String?
+  visiteurPrenom    String?
+  visiteurEmail     String?
+  visiteurTelephone String?
+  financementOk     Boolean?  // Financement validé
+
+  // Relations
+  clientId      String    // Client vendeur propriétaire du bien
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  bienId        String?   // Bien visité (optionnel)
+  bien          Bien?     @relation(fields: [bienId], references: [id])
+}
+
+// ============================================
+// PHOTOS DES BIENS À VENDRE (formulaire vendeur)
+// ============================================
+
+model PhotoVente {
+  id            String    @id @default(cuid())
+  url           String
+  nom           String?
+  createdAt     DateTime  @default(now())
+
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// HISTORIQUE DES PRIX (vendeur - baisses de prix)
+// ============================================
+
+model HistoriquePrix {
+  id            String    @id @default(cuid())
+  prix          Float     // Nouveau prix
+  prixPrecedent Float?    // Prix précédent
+  commentaire   String?   // Raison de la baisse
+  createdAt     DateTime  @default(now())
+
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }
 
 // ============================================
@@ -102,6 +194,7 @@ model Bien {
   vendeur       Vendeur?
   photos        Photo[]
   negociations  NegociationMove[]
+  visites       Visite[]
 }
 
 // ============================================

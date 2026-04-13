@@ -27,7 +27,6 @@ export async function GET(
             photos: true,
             negociations: {
               orderBy: { ordre: "asc" },
-              // Si client, ne pas montrer les notes internes
               where: role === "CLIENT" ? { interne: false } : {},
             },
           },
@@ -35,6 +34,9 @@ export async function GET(
         },
         user: { select: { id: true, email: true } },
         negociateur: { select: { id: true, prenom: true, nom: true } },
+        appels: { orderBy: { date: "desc" } },
+        visites: { orderBy: { dateVisite: "desc" } },
+        historiquePrix: { orderBy: { createdAt: "asc" } },
       },
     });
 
@@ -109,6 +111,14 @@ export async function PATCH(
     if (statut !== undefined) data.statut = statut;
     if (body.negociateurId !== undefined) data.negociateurId = body.negociateurId || null;
     if (body.source !== undefined) data.source = body.source;
+    if (body.typeClient !== undefined) data.typeClient = body.typeClient;
+    if (body.prixVente !== undefined) data.prixVente = body.prixVente ? parseFloat(body.prixVente) : null;
+    if (body.adresseBien !== undefined) data.adresseBien = body.adresseBien;
+    if (body.villeVente !== undefined) data.villeVente = body.villeVente;
+    if (body.surfaceBien !== undefined) data.surfaceBien = body.surfaceBien ? parseFloat(body.surfaceBien) : null;
+    if (body.typeBienVente !== undefined) data.typeBienVente = body.typeBienVente;
+    if (body.descriptionBien !== undefined) data.descriptionBien = body.descriptionBien;
+    if (body.financementOk !== undefined) data.financementOk = body.financementOk;
 
     const client = await prisma.client.update({
       where: { id: params.id },

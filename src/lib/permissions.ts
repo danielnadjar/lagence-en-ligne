@@ -1,6 +1,7 @@
 import { UserRole } from "./types";
 
 // Permissions par rôle
+// SOUS_ADMIN = Manager (vue globale, affectation des leads, supervision)
 export const permissions = {
   ADMIN: {
     canViewAllClients: true,
@@ -16,6 +17,10 @@ export const permissions = {
     canCloturer: true,
     canViewCommissions: true,
     canConfigureSystem: true,
+    canAssignClients: true,
+    canManageVisites: true,
+    canManageAppels: true,
+    canViewKanbanGlobal: true,
   },
   SOUS_ADMIN: {
     canViewAllClients: true,
@@ -31,6 +36,10 @@ export const permissions = {
     canCloturer: true,
     canViewCommissions: true,
     canConfigureSystem: false,
+    canAssignClients: true,
+    canManageVisites: true,
+    canManageAppels: true,
+    canViewKanbanGlobal: true,
   },
   NEGOCIATEUR: {
     canViewAllClients: false, // Voit seulement ses clients assignés
@@ -46,6 +55,10 @@ export const permissions = {
     canCloturer: false,
     canViewCommissions: true,
     canConfigureSystem: false,
+    canAssignClients: false,
+    canManageVisites: true,
+    canManageAppels: true,
+    canViewKanbanGlobal: false, // Voit uniquement son Kanban
   },
 } as const;
 
@@ -58,6 +71,10 @@ export function hasPermission(
 
 export function isAdmin(role: string): boolean {
   return role === "ADMIN" || role === "SOUS_ADMIN";
+}
+
+export function isManager(role: string): boolean {
+  return role === "SOUS_ADMIN";
 }
 
 export function isNegociateur(role: string): boolean {

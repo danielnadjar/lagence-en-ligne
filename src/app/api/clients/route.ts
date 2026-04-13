@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || "";
     const statut = searchParams.get("statut") || "";
     const source = searchParams.get("source") || "";
+    const typeClient = searchParams.get("typeClient") || "";
     const nonAssigne = searchParams.get("nonAssigne"); // Pour la pioche QCM
     const negociateurId = searchParams.get("negociateurId");
 
@@ -52,6 +53,7 @@ export async function GET(req: NextRequest) {
     }
     if (statut) where.statut = statut;
     if (source) where.source = source;
+    if (typeClient) where.typeClient = typeClient;
 
     const clients = await prisma.client.findMany({
       where,
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as any).id;
 
     const body = await req.json();
-    const { prenom, nom, email, telephone, budgetMax, prixIdeal, source, notes, negociateurId } = body;
+    const { prenom, nom, email, telephone, budgetMax, prixIdeal, source, notes, negociateurId, typeClient, prixVente, adresseBien, villeVente, surfaceBien, typeBienVente, descriptionBien } = body;
 
     if (!prenom || !nom || !email) {
       return NextResponse.json(
@@ -105,7 +107,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const numero = await genererNumeroClient();
+    const numero = await genererNumeroClient(typeClient || "ACQUEREUR");
 
     // Vérifier si un User existe déjà avec cet email (ex: négociateur, admin)
     let user = await prisma.user.findUnique({ where: { email } });
@@ -147,8 +149,17 @@ export async function POST(req: NextRequest) {
         prixIdeal: prixIdeal ? parseFloat(prixIdeal) : null,
         notes: notes || null,
         source: source || (userRole === "NEGOCIATEUR" ? "EXTERIEUR" : "CRM"),
+        typeClient: typeClient || "ACQUEREUR",
+        statut: "PROSPECT",
         userId: user.id,
         negociateurId: assignedNegociateurId,
+        // Champs vendeur
+        prixVente: prixVente ? parseFloat(prixVente) : null,
+        adresseBien: adresseBien || null,
+        villeVente: villeVente || null,
+        surfaceBien: surfaceBien ? parseFloat(surfaceBien) : null,
+        typeBienVente: typeBienVente || null,
+        descriptionBien: descriptionBien || null,
       },
     });
 
