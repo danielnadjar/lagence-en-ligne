@@ -8,7 +8,11 @@ export default async function ClientLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  if (!session || (session.user as any).role !== "CLIENT") {
+  if (!session) {
+    redirect("/login");
+  }
+  const role = (session.user as any).role;
+  if (role !== "CLIENT_ACQUEREUR" && role !== "CLIENT_VENDEUR") {
     redirect("/login");
   }
 

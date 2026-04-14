@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         prenom,
         nom,
         telephone: telephone || null,
-        role: "CLIENT",
+        role: "CLIENT_VENDEUR",
       },
     });
 

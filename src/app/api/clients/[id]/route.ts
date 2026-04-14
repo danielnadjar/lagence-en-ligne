@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isAdmin, canAccessCRM } from "@/lib/permissions";
+import { isAdmin, canAccessCRM, isClientRole } from "@/lib/permissions";
 
 // GET /api/clients/[id] - Fiche client complète
 export async function GET(
@@ -27,7 +27,7 @@ export async function GET(
             photos: true,
             negociations: {
               orderBy: { ordre: "asc" },
-              where: role === "CLIENT" ? { interne: false } : {},
+              where: isClientRole(role) ? { interne: false } : {},
             },
           },
           orderBy: { createdAt: "desc" },
@@ -45,7 +45,7 @@ export async function GET(
     }
 
     // Un client ne peut voir que sa propre fiche
-    if (role === "CLIENT" && client.userId !== userId) {
+    if (isClientRole(role) && client.userId !== userId) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
 
@@ -55,7 +55,7 @@ export async function GET(
     }
 
     // Masquer les infos sensibles vendeur pour le client
-    if (role === "CLIENT") {
+    if (isClientRole(role)) {
       client.biens = client.biens.map((bien: any) => ({
         ...bien,
         vendeur: bien.vendeur

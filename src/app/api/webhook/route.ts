@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         prenom: prenom || "Prospect",
         nom: nom || "",
         telephone: telephone || null,
-        role: "CLIENT",
+        role: (typeClient || "ACQUEREUR") === "VENDEUR" ? "CLIENT_VENDEUR" : "CLIENT_ACQUEREUR",
       },
     });
 
