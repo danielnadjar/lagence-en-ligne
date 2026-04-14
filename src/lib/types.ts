@@ -1,8 +1,28 @@
-// Types et interfaces du CRM Négociateur
+// L'Agence en Ligne — Types et interfaces centralisés
 
-export type UserRole = "ADMIN" | "SOUS_ADMIN" | "NEGOCIATEUR";
+// ============================================
+// RÔLES UTILISATEURS (étendu)
+// ============================================
 
-export type LeadSource = "QCM" | "SITE" | "CRM" | "EXTERIEUR" | "LOVABLE" | "MANUEL" | "CHATBOT" | "FORMULAIRE" | "AUTRE";
+export type UserRole =
+  | "ADMIN"
+  | "SOUS_ADMIN"
+  | "DIRECTEUR"
+  | "MANAGER"
+  | "NEGOCIATEUR"
+  | "CLIENT_ACQUEREUR"
+  | "CLIENT_VENDEUR";
+
+export type LeadSource =
+  | "QCM"
+  | "SITE"
+  | "CRM"
+  | "EXTERIEUR"
+  | "LOVABLE"
+  | "MANUEL"
+  | "CHATBOT"
+  | "FORMULAIRE"
+  | "AUTRE";
 
 export type TypeClient = "ACQUEREUR" | "VENDEUR";
 
@@ -10,32 +30,33 @@ export type TypeClient = "ACQUEREUR" | "VENDEUR";
 // STATUTS PIPELINE KANBAN
 // ============================================
 
-// Statuts communs + spécifiques vendeur + spécifiques acquéreur
 export type ClientStatut =
   // Communs
-  | "PROSPECT"           // Nouveau lead, pas encore affecté
-  | "AFFECTE"            // Assigné à un négociateur
+  | "PROSPECT"
+  | "AFFECTE"
   // Vendeur
-  | "COMMERCIALISATION"  // Création des annonces
-  | "EN_ATTENTE_VISITES" // Annonces publiées, attente de visiteurs
-  | "VISITES_EN_COURS"   // Des visites sont planifiées/en cours
-  // Acquéreur (service négociation)
-  | "ATTENTE_ANNONCE"    // L'acquéreur cherche un bien
+  | "COMMERCIALISATION"
+  | "EN_ATTENTE_VISITES"
+  | "VISITES_EN_COURS"
+  | "COMPTE_RENDU"
+  // Acquéreur
+  | "ATTENTE_ANNONCE"
+  | "ANALYSE"
   // Communs fin de pipeline
-  | "NEGOCIATION"        // Offre/contre-offre en cours
-  | "OFFRE_EN_COURS"     // Offre soumise, en attente de réponse
-  | "ADMIN_JURIDIQUE"    // Offre acceptée, processus administratif/juridique
-  | "VENDU"              // Clôturé - vendu/acheté avec succès
-  | "SANS_SUITE"         // Clôturé - pas de suite
-  | "INACTIF";           // Mis en pause
+  | "NEGOCIATION"
+  | "OFFRE_EN_COURS"
+  | "ADMIN_JURIDIQUE"
+  | "VENDU"
+  | "SANS_SUITE"
+  | "INACTIF";
 
-// Colonnes Kanban par type de client
 export const PIPELINE_VENDEUR: ClientStatut[] = [
   "PROSPECT",
   "AFFECTE",
   "COMMERCIALISATION",
   "EN_ATTENTE_VISITES",
   "VISITES_EN_COURS",
+  "COMPTE_RENDU",
   "NEGOCIATION",
   "OFFRE_EN_COURS",
   "ADMIN_JURIDIQUE",
@@ -47,6 +68,7 @@ export const PIPELINE_ACQUEREUR: ClientStatut[] = [
   "PROSPECT",
   "AFFECTE",
   "ATTENTE_ANNONCE",
+  "ANALYSE",
   "NEGOCIATION",
   "OFFRE_EN_COURS",
   "ADMIN_JURIDIQUE",
@@ -54,14 +76,15 @@ export const PIPELINE_ACQUEREUR: ClientStatut[] = [
   "SANS_SUITE",
 ];
 
-// Pipeline Manager (vue globale tous types confondus)
 export const PIPELINE_MANAGER: ClientStatut[] = [
   "PROSPECT",
   "AFFECTE",
   "COMMERCIALISATION",
   "EN_ATTENTE_VISITES",
   "VISITES_EN_COURS",
+  "COMPTE_RENDU",
   "ATTENTE_ANNONCE",
+  "ANALYSE",
   "NEGOCIATION",
   "OFFRE_EN_COURS",
   "ADMIN_JURIDIQUE",
@@ -92,14 +115,11 @@ export type TypeBien =
   | "AUTRE";
 
 export type NegoCamp = "ACQUEREUR" | "VENDEUR";
-
 export type NegoType = "OFFRE" | "CONTRE_OFFRE" | "REPONSE" | "COMMENTAIRE";
-
 export type NegoStatut = "ACCEPTE" | "REFLECHIR" | "REFUS" | "SANS_SUITE";
-
 export type VisiteStatut = "PLANIFIEE" | "REALISEE" | "ANNULEE" | "REPORT";
-
 export type AvisVisite = "OUI" | "NON" | "REFLEXION";
+export type DocumentType = "MANDAT" | "OFFRE" | "COMPROMIS" | "PIECE_DOSSIER" | "AUTRE";
 
 // ============================================
 // LABELS FRANÇAIS
@@ -107,12 +127,14 @@ export type AvisVisite = "OUI" | "NON" | "REFLEXION";
 
 export const STATUT_CLIENT_LABELS: Record<ClientStatut, string> = {
   PROSPECT: "Prospect",
-  AFFECTE: "Affecté",
+  AFFECTE: "Affect\u00e9",
   COMMERCIALISATION: "Commercialisation",
   EN_ATTENTE_VISITES: "Attente visites",
   VISITES_EN_COURS: "Visites en cours",
+  COMPTE_RENDU: "Compte-rendu",
   ATTENTE_ANNONCE: "Attente annonce",
-  NEGOCIATION: "Négociation",
+  ANALYSE: "Analyse",
+  NEGOCIATION: "N\u00e9gociation",
   OFFRE_EN_COURS: "Offre en cours",
   ADMIN_JURIDIQUE: "Admin / Juridique",
   VENDU: "Vendu",
@@ -121,33 +143,35 @@ export const STATUT_CLIENT_LABELS: Record<ClientStatut, string> = {
 };
 
 export const STATUT_CLIENT_COLORS: Record<ClientStatut, string> = {
-  PROSPECT: "bg-gray-500",
+  PROSPECT: "bg-zinc-500",
   AFFECTE: "bg-blue-500",
   COMMERCIALISATION: "bg-indigo-500",
-  EN_ATTENTE_VISITES: "bg-purple-500",
-  VISITES_EN_COURS: "bg-violet-500",
+  EN_ATTENTE_VISITES: "bg-violet-500",
+  VISITES_EN_COURS: "bg-purple-500",
+  COMPTE_RENDU: "bg-fuchsia-500",
   ATTENTE_ANNONCE: "bg-amber-500",
+  ANALYSE: "bg-sky-500",
   NEGOCIATION: "bg-orange-500",
   OFFRE_EN_COURS: "bg-yellow-500",
   ADMIN_JURIDIQUE: "bg-cyan-500",
-  VENDU: "bg-green-500",
+  VENDU: "bg-emerald-500",
   SANS_SUITE: "bg-red-500",
-  INACTIF: "bg-gray-400",
+  INACTIF: "bg-zinc-400",
 };
 
 export const STATUT_BIEN_LABELS: Record<BienStatut, string> = {
   NOUVEAU: "Nouveau",
   A_ANALYSER: "A analyser",
   EN_ATTENTE_INFOS: "En attente d'infos",
-  NEGO_DEMARREE: "Négociation démarrée",
-  EN_COURS_NEGO: "En cours de négociation",
+  NEGO_DEMARREE: "N\u00e9gociation d\u00e9marr\u00e9e",
+  EN_COURS_NEGO: "En cours de n\u00e9gociation",
   EN_ATTENTE_VENDEUR: "En attente vendeur",
-  EN_ATTENTE_ACQUEREUR: "En attente acquéreur",
-  ACCORD_TROUVE: "Accord trouvé",
+  EN_ATTENTE_ACQUEREUR: "En attente acqu\u00e9reur",
+  ACCORD_TROUVE: "Accord trouv\u00e9",
   REFUS: "Refus",
   SANS_SUITE: "Sans suite",
-  CLOTURE: "Clôturé",
-  ABANDONNE: "Abandonné",
+  CLOTURE: "Cl\u00f4tur\u00e9",
+  ABANDONNE: "Abandonn\u00e9",
 };
 
 export const TYPE_BIEN_LABELS: Record<TypeBien, string> = {
@@ -163,7 +187,7 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
   QCM: "QCM",
   SITE: "Site du service",
   CRM: "CRM (manuel)",
-  EXTERIEUR: "Extérieur",
+  EXTERIEUR: "Ext\u00e9rieur",
   LOVABLE: "Site Lovable",
   MANUEL: "Manuel",
   CHATBOT: "Chatbot",
@@ -173,21 +197,51 @@ export const SOURCE_LABELS: Record<LeadSource, string> = {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: "Administrateur",
-  SOUS_ADMIN: "Manager",
-  NEGOCIATEUR: "Négociateur",
+  SOUS_ADMIN: "Sous-administrateur",
+  DIRECTEUR: "Directeur d'agence",
+  MANAGER: "Manager",
+  NEGOCIATEUR: "N\u00e9gociateur",
+  CLIENT_ACQUEREUR: "Client acqu\u00e9reur",
+  CLIENT_VENDEUR: "Client vendeur",
 };
 
 export const TYPE_CLIENT_LABELS: Record<TypeClient, string> = {
-  ACQUEREUR: "Acquéreur",
+  ACQUEREUR: "Acqu\u00e9reur",
   VENDEUR: "Vendeur",
 };
 
 export const VISITE_STATUT_LABELS: Record<VisiteStatut, string> = {
-  PLANIFIEE: "Planifiée",
-  REALISEE: "Réalisée",
-  ANNULEE: "Annulée",
-  REPORT: "Reportée",
+  PLANIFIEE: "Planifi\u00e9e",
+  REALISEE: "R\u00e9alis\u00e9e",
+  ANNULEE: "Annul\u00e9e",
+  REPORT: "Report\u00e9e",
 };
+
+// ============================================
+// RÔLES — PERMISSIONS
+// ============================================
+
+export const ROLE_HIERARCHY: Record<UserRole, number> = {
+  ADMIN: 100,
+  SOUS_ADMIN: 90,
+  DIRECTEUR: 80,
+  MANAGER: 70,
+  NEGOCIATEUR: 50,
+  CLIENT_ACQUEREUR: 10,
+  CLIENT_VENDEUR: 10,
+};
+
+export function hasPermission(userRole: UserRole, requiredRole: UserRole): boolean {
+  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
+}
+
+export function isInternalRole(role: UserRole): boolean {
+  return ["ADMIN", "SOUS_ADMIN", "DIRECTEUR", "MANAGER", "NEGOCIATEUR"].includes(role);
+}
+
+export function isClientRole(role: UserRole): boolean {
+  return ["CLIENT_ACQUEREUR", "CLIENT_VENDEUR"].includes(role);
+}
 
 // ============================================
 // CALCULS MÉTIER
@@ -198,9 +252,13 @@ export function calculerEconomie(prixAffiche: number, prixActuel: number): numbe
 }
 
 export function calculerCommission(economie: number): number {
-  // 10% des économies sur des tranches complètes de 5000€
-  const tranches = Math.floor(economie / 5000);
-  return tranches * 500; // 10% de 5000 = 500 par tranche
+  return Math.round(economie * 0.1); // 10% des économies
+}
+
+export const FORFAIT_ACQUEREUR = 500; // EUR
+
+export function calculerTotalAcquereur(economie: number): number {
+  return FORFAIT_ACQUEREUR + calculerCommission(economie);
 }
 
 export function formatPrix(montant: number): string {

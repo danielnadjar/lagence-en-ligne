@@ -1,19 +1,4 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-
-export default async function Home() {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  const role = (session.user as any).role;
-
-  if (role === "CLIENT") {
-    redirect("/client");
-  } else {
-    redirect("/admin/dashboard");
-  }
-}
+// La homepage est maintenant servie par (site)/page.tsx
+// Ce fichier redirige vers le dashboard si l'utilisateur est connecté
+// Sinon, Next.js sert le layout (site) qui affiche la homepage publique
+export { default } from "./(site)/page";

@@ -3,34 +3,87 @@
 @tailwind utilities;
 
 @layer base {
+  /* Site public : fond clair */
+  :root {
+    --color-bg: #fafafa;
+    --color-text: #18181b;
+  }
+
   body {
-    @apply bg-dark-950 text-white antialiased;
+    @apply bg-[var(--color-bg)] text-[var(--color-text)] antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Dashboard : fond sombre (appliqué via layout) */
+  .theme-dark {
+    --color-bg: #09090b;
+    --color-text: #fafafa;
+  }
+
+  .theme-dark body,
+  body.theme-dark {
+    @apply bg-surface-950 text-white;
   }
 }
 
 @layer components {
+  /* ========== SITE PUBLIC ========== */
+
+  .site-container {
+    @apply max-w-container mx-auto px-4 md:px-8;
+  }
+
+  .heading-display {
+    @apply text-4xl md:text-6xl tracking-tighter leading-none font-semibold text-surface-950;
+  }
+
+  .heading-section {
+    @apply text-2xl md:text-4xl tracking-tight leading-tight font-semibold text-surface-900;
+  }
+
+  .body-text {
+    @apply text-base text-surface-600 leading-relaxed max-w-[65ch];
+  }
+
+  .btn-accent {
+    @apply bg-accent-600 hover:bg-accent-700 text-white px-6 py-3 rounded-2xl font-medium
+           transition-all duration-200 active:scale-[0.98] active:-translate-y-[1px];
+  }
+
+  .btn-outline {
+    @apply border border-surface-300 hover:border-surface-400 text-surface-700 px-6 py-3 rounded-2xl font-medium
+           transition-all duration-200 bg-white hover:bg-surface-50;
+  }
+
+  /* ========== DASHBOARD (LEGACY + NEW) ========== */
+
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-xl font-medium
+           transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-dark-700 hover:bg-dark-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 border border-dark-500;
+    @apply bg-surface-800 hover:bg-surface-700 text-white px-4 py-2 rounded-xl font-medium
+           transition-colors duration-200 border border-surface-600;
   }
 
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium transition-colors duration-200;
   }
 
   .input-field {
-    @apply w-full bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-white placeholder-dark-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+    @apply w-full bg-surface-800 border border-surface-600 rounded-xl px-3 py-2 text-white
+           placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500
+           focus:border-transparent transition-all;
   }
 
   .select-field {
-    @apply w-full bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full bg-surface-800 border border-surface-600 rounded-xl px-3 py-2 text-white
+           focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent;
   }
 
   .card {
-    @apply bg-dark-900 border border-dark-700 rounded-xl p-6;
+    @apply bg-surface-900 border border-surface-700 rounded-2xl p-6;
   }
 
   .badge {
@@ -54,15 +107,23 @@
   }
 
   .badge-clos {
-    @apply badge bg-dark-500/20 text-dark-300;
+    @apply badge bg-surface-500/20 text-surface-300;
   }
 
   /* Ping-pong négociation */
   .nego-acquereur {
-    @apply bg-primary-900/30 border-l-4 border-primary-500;
+    @apply bg-accent-900/30 border-l-4 border-accent-500;
   }
 
   .nego-vendeur {
     @apply bg-orange-900/30 border-r-4 border-orange-500;
+  }
+
+  /* ========== SITE PUBLIC : INPUT LIGHT ========== */
+
+  .input-light {
+    @apply w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-surface-900
+           placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-accent-500
+           focus:border-transparent transition-all;
   }
 }
